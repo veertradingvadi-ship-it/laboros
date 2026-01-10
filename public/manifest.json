@@ -1,0 +1,53 @@
+{
+    "name": "LaborOS",
+    "short_name": "LaborOS",
+    "description": "Workforce Management System",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#f97316",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshot-1.png",
+            "sizes": "1080x1920",
+            "type": "image/png",
+            "form_factor": "narrow"
+        }
+    ],
+    "categories": [
+        "business",
+        "productivity"
+    ],
+    "shortcuts": [
+        {
+            "name": "Morning Scan",
+            "url": "/scanner",
+            "description": "Start face recognition attendance"
+        },
+        {
+            "name": "Verify",
+            "url": "/verify",
+            "description": "Evening verification ceremony"
+        },
+        {
+            "name": "Payouts",
+            "url": "/payouts",
+            "description": "Process worker payments"
+        }
+    ]
+}

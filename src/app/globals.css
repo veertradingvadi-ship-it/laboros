@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+}
+
+/* Flash mode for night scanning */
+.flash-mode {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.flash-mode * {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Scanner overlay animations */
+@keyframes scan-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+  }
+}
+
+.scan-pulse {
+  animation: scan-pulse 2s infinite;
+}
+
+/* Toast notification slide up animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+/* Face detection overlay */
+.face-overlay {
+  border: 3px solid #22c55e;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Bottom navigation safe area */
+.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* PWA install prompt */
+.pwa-prompt {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+}
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg,
+      rgba(0, 0, 0, 0.06) 25%,
+      rgba(0, 0, 0, 0.12) 50%,
+      rgba(0, 0, 0, 0.06) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Theme color classes */
+.theme-orange {
+  --theme-primary: theme('colors.orange.500');
+}
+
+.theme-blue {
+  --theme-primary: theme('colors.blue.500');
+}
+
+.theme-slate {
+  --theme-primary: theme('colors.slate.600');
+}
+
+.theme-green {
+  --theme-primary: theme('colors.green.500');
+}
+
+/* Input text visibility - GLOBAL FIX for all inputs */
+/* Default: Dark text on light backgrounds */
+input,
+textarea,
+select {
+  color: #1e293b !important;
+  /* slate-800 - always dark text */
+  background-color: #ffffff !important;
+  /* white background */
+  caret-color: #1e293b !important;
+  /* cursor color */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+  /* slate-400 - visible placeholder */
+  opacity: 1 !important;
+}
+
+/* Style for inputs with transparent/dark backgrounds (login, dashboard, scanner) */
+.bg-white\/5 input,
+.bg-white\/10 input,
+.bg-white\/20 input,
+[class*="backdrop-blur"] input,
+[class*="from-slate-900"] input,
+[class*="from-purple-900"] input {
+  color: #ffffff !important;
+  /* white text */
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  caret-color: #ffffff !important;
+}
+
+.bg-white\/5 input::placeholder,
+.bg-white\/10 input::placeholder,
+.bg-white\/20 input::placeholder,
+[class*="backdrop-blur"] input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Textarea in dark mode */
+.bg-white\/5 textarea,
+.bg-white\/10 textarea,
+[class*="backdrop-blur"] textarea {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.bg-white\/5 textarea::placeholder,
+.bg-white\/10 textarea::placeholder,
+[class*="backdrop-blur"] textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Select dropdowns */
+select option {
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+}
+
+/* Focus states - blue ring */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Make sure disabled inputs are still readable */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: #64748b !important;
+  background-color: #f1f5f9 !important;
+  cursor: not-allowed;
+}
