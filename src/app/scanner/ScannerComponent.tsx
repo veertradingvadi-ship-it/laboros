@@ -160,7 +160,7 @@ export default function ScannerComponent() {
             if (match) {
                 console.log(`[SCAN] ✓ Matched: ${match.worker.name}`);
                 if (lastScannedId === match.worker.id) { setScanStatus('Wait...'); setIsScanning(false); return; }
-                await handleWorkerScan(match.worker.id);
+                await handleWorkerScan(match.worker.id, match.worker.name);
             } else {
                 // No match - must be frontal face with eyes visible to register
                 if (!isFrontalFace) {
@@ -189,26 +189,24 @@ export default function ScannerComponent() {
         finally { setIsScanning(false); }
     }, [cameraReady, modelsReady, isScanning, cooldown, workers, todayLogs, lastScannedId]);
 
-    const handleWorkerScan = async (workerId: string) => {
-        const worker = workers.find(w => w.id === workerId);
-        if (!worker) return;
+    const handleWorkerScan = async (workerId: string, workerName: string) => {
         const existingLog = todayLogs.find(l => l.worker_id === workerId);
 
         if (!existingLog) {
-            await performCheckIn(workerId);
+            await performCheckIn(workerId, workerName);
         } else if (!existingLog.check_out_time) {
             const checkInTime = new Date(existingLog.check_in_time!).getTime();
             const hoursSince = (Date.now() - checkInTime) / 3600000;
             if (hoursSince < 1) {
                 const minsAgo = Math.round((Date.now() - checkInTime) / 60000);
-                showFeedback(`${worker.name}\n${t('Already scanned')} ${minsAgo}m`, 'info');
-                addRecentScan(workerId, worker.name, 'SKIP');
+                showFeedback(`${workerName}\n${t('Already scanned')} ${minsAgo}m`, 'info');
+                addRecentScan(workerId, workerName, 'SKIP');
                 startCooldown(workerId);
             } else {
-                await performCheckOut(workerId, hoursSince);
+                await performCheckOut(workerId, workerName, hoursSince);
             }
         } else {
-            showFeedback(`${worker.name}\n${t('Day completed')}`, 'info');
+            showFeedback(`${workerName}\n${t('Day completed')}`, 'info');
             startCooldown(workerId);
         }
     };
@@ -231,31 +229,36 @@ export default function ScannerComponent() {
         } catch { setError('Check-in failed'); setTimeout(() => setError(null), 2000); }
     };
 
-    const performCheckOut = async (workerId: string, hours?: number) => {
+    const performCheckOut = async (workerId: string, workerName: string, hours?: number) => {
         try {
             await supabase.from('attendance_logs').update({
                 check_out_time: new Date().toISOString(),
             }).eq('worker_id', workerId).eq('date', currentDate);
 
-            const worker = workers.find(w => w.id === workerId);
             const duration = hours ? ` • ${Math.floor(hours)}h` : '';
-            showFeedback(`${worker?.name}\n✓ ${t('CHECK OUT')}${duration}`, 'out');
-            speak(`${worker?.name}, ચેક આઉટ થયું`); // Gujarati: Check out done
-            addRecentScan(workerId, worker?.name || '', 'OUT');
+            showFeedback(`${workerName}\n✓ ${t('CHECK OUT')}${duration}`, 'out');
+            speak(`${workerName}, ચેક આઉટ થયું`); // Gujarati: Check out done
+            addRecentScan(workerId, workerName, 'OUT');
             loadData(); startCooldown(workerId);
         } catch { setError('Check-out failed'); setTimeout(() => setError(null), 2000); }
     };
 
-    const manualCheckIn = async (workerId: string) => { await performCheckIn(workerId); setViewMode('camera'); };
+    const manualCheckIn = async (workerId: string) => {
+        const worker = workers.find(w => w.id === workerId);
+        await performCheckIn(workerId, worker?.name);
+        setViewMode('camera');
+    };
     const manualCheckOut = async (workerId: string) => {
+        const worker = workers.find(w => w.id === workerId);
         const log = todayLogs.find(l => l.worker_id === workerId);
         const hours = log?.check_in_time ? (Date.now() - new Date(log.check_in_time).getTime()) / 3600000 : undefined;
-        await performCheckOut(workerId, hours); setViewMode('camera');
+        await performCheckOut(workerId, worker?.name || 'Worker', hours);
+        setViewMode('camera');
     };
 
     const showFeedback = (message: string, type: 'in' | 'out' | 'info') => {
         setSuccessMessage(message); setSuccessType(type);
-        setTimeout(() => setSuccessMessage(null), 2500);
+        setTimeout(() => setSuccessMessage(null), 8000); // Display for 8 seconds
     };
 
     const addRecentScan = (workerId: string, workerName: string, action: 'IN' | 'OUT' | 'SKIP') => {
@@ -264,7 +267,7 @@ export default function ScannerComponent() {
 
     const startCooldown = (workerId: string) => {
         setLastScannedId(workerId); setCooldown(true);
-        setTimeout(() => { setCooldown(false); setLastScannedId(null); setScanStatus('Ready'); }, 3000);
+        setTimeout(() => { setCooldown(false); setLastScannedId(null); setScanStatus('Ready'); }, 10000); // 10 second cooldown
     };
 
     // Simple single-photo enrollment (fast registration)
