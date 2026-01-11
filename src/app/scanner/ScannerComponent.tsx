@@ -173,35 +173,20 @@ export default function ScannerComponent() {
                 return;
             }
 
-            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.45); // Very strict for accurate matching
+            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.55); // Balanced threshold
 
             if (match) {
-                console.log(`[SCAN] ✓ Matched: ${match.worker.name}`);
+                console.log(`[SCAN] ✓ Matched: ${match.worker.name} (${(match.similarity * 100).toFixed(0)}%)`);
                 if (lastScannedId === match.worker.id) { setScanStatus('Wait...'); setIsScanning(false); return; }
                 await handleWorkerScan(match.worker.id, match.worker.name);
             } else {
-                // No match - must be frontal face with eyes visible to register
-                if (!isFrontalFace) {
-                    setScanStatus('Look straight at camera');
-                    speak('Look straight');
-                    console.log('[SCAN] ✗ Not frontal face - rejecting');
-                    return;
-                }
-
-                // Check face quality
-                const quality = await checkImageQuality(croppedFace);
-                console.log('[SCAN] Quality check:', quality);
-
-                if (!quality.isGood) {
-                    const issue = quality.issues[0] || 'Face not clear';
-                    setScanStatus(`${issue} - Try again`);
-                    speak(issue);
-                    console.log('[SCAN] ✗ Quality failed:', quality.issues);
-                } else {
-                    // Good frontal face - start multi-angle enrollment
-                    console.log('[SCAN] ✓ Frontal + Good quality - starting enrollment');
-                    startEnrollment();
-                }
+                // No match found - DO NOT auto-register to prevent duplicates
+                // User must manually add workers through admin panel
+                console.log('[SCAN] ✗ No match found - prompting admin registration');
+                setScanStatus('Unknown face - Register via Admin');
+                speak('Face not recognized. Please register this worker through admin panel.');
+                showFeedback('Unknown Face\n\nRegister via Admin Panel', 'info');
+                startCooldown('unknown');
             }
         } catch (err) { console.error('[SCAN] Error:', err); setScanStatus('Error'); }
         finally { setIsScanning(false); }
