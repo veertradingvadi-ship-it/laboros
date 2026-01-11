@@ -1,5 +1,12 @@
 // Face detection and recognition utilities using face-api.js
-import * as faceapi from '@vladmandic/face-api';
+// Only import on client side to avoid SSG/SSR issues with tfjs-node
+let faceapi: typeof import('@vladmandic/face-api') | null = null;
+
+if (typeof window !== 'undefined') {
+    import('@vladmandic/face-api').then(module => {
+        faceapi = module;
+    });
+}
 
 let modelsLoaded = false;
 
@@ -9,12 +16,19 @@ export async function loadFaceModels(): Promise<boolean> {
     if (modelsLoaded) return true;
 
     try {
+        // Wait for dynamic import to complete
+        if (!faceapi) {
+            const module = await import('@vladmandic/face-api');
+            faceapi = module;
+        }
+        const api = faceapi!; // TypeScript narrowing helper
+
         const MODEL_URL = '/models';
 
         await Promise.all([
-            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+            api.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+            api.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            api.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
 
         modelsLoaded = true;
@@ -53,6 +67,11 @@ export interface FaceBox {
 // Quick face detection for tracking (no descriptor, just position)
 export async function detectFaceBox(videoElement: HTMLVideoElement): Promise<FaceBox | null> {
     try {
+        if (!faceapi) {
+            const module = await import('@vladmandic/face-api');
+            faceapi = module;
+        }
+
         const detection = await faceapi.detectSingleFace(
             videoElement,
             new faceapi.SsdMobilenetv1Options({ minConfidence: 0.2 })
@@ -84,8 +103,9 @@ export async function detectFaceFromBase64(base64Image: string): Promise<FaceDet
         img.onload = async () => {
             try {
                 // Very low confidence (0.1) to detect faces even in poor conditions
-                const detection = await faceapi
-                    .detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 }))
+                const api = faceapi!;
+                const detection = await api
+                    .detectSingleFace(img, new api.SsdMobilenetv1Options({ minConfidence: 0.1 }))
                     .withFaceLandmarks()
                     .withFaceDescriptor();
 
@@ -193,6 +213,7 @@ export async function getFaceDescriptorFromBase64(base64Image: string): Promise<
 
 // Calculate euclidean distance between descriptors
 export function getFaceDistance(d1: Float32Array, d2: Float32Array): number {
+    if (!faceapi) throw new Error('Face API not loaded');
     return faceapi.euclideanDistance(d1, d2);
 }
 
