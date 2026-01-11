@@ -155,7 +155,7 @@ export default function ScannerComponent() {
                 return;
             }
 
-            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.5); // Balanced threshold
+            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.55); // More lenient for better recognition
 
             if (match) {
                 console.log(`[SCAN] ✓ Matched: ${match.worker.name}`);
@@ -474,7 +474,8 @@ export default function ScannerComponent() {
                             <Webcam ref={webcamRef} audio={false} screenshotFormat="image/jpeg"
                                 videoConstraints={{ facingMode: 'user' }}
                                 onUserMedia={() => setCameraReady(true)}
-                                className="absolute inset-0 w-full h-full object-cover" />
+                                className="absolute inset-0 w-full h-full object-cover"
+                                style={{ transform: 'scaleX(-1)' }} />
 
                             {/* Scan Status - Glowing */}
                             <div className="absolute top-4 left-4 right-4">

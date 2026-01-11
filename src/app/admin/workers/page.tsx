@@ -692,7 +692,8 @@ export default function AdminWorkersPage() {
                                         <Webcam ref={webcamRef}
                                             screenshotFormat="image/jpeg"
                                             videoConstraints={{ width: 640, height: 480, facingMode: "user" }}
-                                            className="w-full h-full object-cover" />
+                                            className="w-full h-full object-cover"
+                                            style={{ transform: 'scaleX(-1)' }} />
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                             {scanStep === 'LOADING_MODELS' && <div className="bg-black/60 text-cyan-400 px-4 py-2 rounded-xl font-bold">Loading AI...</div>}
                                             {scanStep === 'SCANNING_CENTER' && <div className="w-32 h-32 border-2 border-dashed border-white/50 rounded-full flex items-center justify-center text-white text-sm">Look Center</div>}
