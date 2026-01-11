@@ -125,7 +125,7 @@ export default function ScannerComponent() {
             }
         };
 
-        const trackingInterval = setInterval(trackFace, 200);
+        const trackingInterval = setInterval(trackFace, 400); // Reduced to prevent lag
         return () => clearInterval(trackingInterval);
     }, [cameraReady, modelsReady, viewMode]);
 
@@ -160,7 +160,7 @@ export default function ScannerComponent() {
             // Debug: Check workers with descriptors
             const workersWithDescriptors: WorkerWithDescriptor[] = workers
                 .filter(w => w.face_descriptor && w.face_descriptor.length === 128)
-                .map(w => ({ id: w.id, name: w.name, face_descriptor: w.face_descriptor, photo_url: w.photo_url }));
+                .map(w => ({ id: w.id, name: w.name, face_descriptor: w.face_descriptor, photo_url: w.photo_url, worker_number: w.worker_number }));
 
             console.log(`[SCAN] Workers loaded: ${workers.length}, With face data: ${workersWithDescriptors.length}`);
 

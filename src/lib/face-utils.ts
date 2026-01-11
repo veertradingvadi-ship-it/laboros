@@ -223,6 +223,7 @@ export interface WorkerWithDescriptor {
     name: string;
     face_descriptor: number[] | null;
     photo_url: string | null;
+    worker_number?: string | null; // Employee code
 }
 
 // THRESHOLD: 0.55 for balanced accuracy
