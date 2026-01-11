@@ -104,6 +104,33 @@ export default function ScannerComponent() {
             await loadData();
         };
         init();
+
+        // Stop camera when page is hidden (tab switch, minimize, leave app)
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                // Page is hidden - stop camera
+                const video = webcamRef.current?.video;
+                if (video && video.srcObject) {
+                    const stream = video.srcObject as MediaStream;
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                setCameraReady(false);
+                console.log('[CAMERA] Stopped - page hidden');
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Cleanup on unmount
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            // Stop all camera streams
+            const video = webcamRef.current?.video;
+            if (video && video.srcObject) {
+                const stream = video.srcObject as MediaStream;
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
     }, []);
 
     useEffect(() => {
