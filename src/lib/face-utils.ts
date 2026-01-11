@@ -74,7 +74,7 @@ export async function detectFaceBox(videoElement: HTMLVideoElement): Promise<Fac
 
         const detection = await faceapi.detectSingleFace(
             videoElement,
-            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 }) // Very low for reliable tracking
+            new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }) // Higher confidence for accuracy
         );
 
         if (!detection) return null;

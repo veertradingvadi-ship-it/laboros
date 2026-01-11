@@ -37,7 +37,7 @@ export default function ScannerComponent() {
     const [modelsReady, setModelsReady] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('camera');
-    const [lang, setLang] = useState<'en' | 'gu'>('en');
+    const [lang, setLang] = useState<'en' | 'gu'>('gu'); // Default Gujarati for managers
 
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [todayLogs, setTodayLogs] = useState<AttendanceLog[]>([]);
@@ -70,6 +70,10 @@ export default function ScannerComponent() {
     // Early checkout confirmation state
     const [earlyCheckoutConfirm, setEarlyCheckoutConfirm] = useState<{ workerId: string; workerName: string; hours: number; expires: number } | null>(null);
 
+    // Speech deduplication to prevent repeating
+    const [lastSpokenText, setLastSpokenText] = useState<string>('');
+    const lastSpokenTimeRef = { current: 0 };
+
     const setShowEarlyCheckoutConfirm = (data: { workerId: string; workerName: string; hours: number }) => {
         setEarlyCheckoutConfirm({ ...data, expires: Date.now() + 30000 }); // 30 second timeout
     };
@@ -79,10 +83,17 @@ export default function ScannerComponent() {
 
     const speak = (text: string) => {
         if ('speechSynthesis' in window) {
+            // Prevent repeating the same message within 5 seconds
+            const now = Date.now();
+            if (text === lastSpokenText && now - lastSpokenTimeRef.current < 5000) {
+                return; // Skip duplicate
+            }
             speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(text);
-            u.rate = 0.85;
+            u.rate = 1.0; // Faster speech
             speechSynthesis.speak(u);
+            setLastSpokenText(text);
+            lastSpokenTimeRef.current = now;
         }
     };
 
@@ -97,7 +108,7 @@ export default function ScannerComponent() {
 
     useEffect(() => {
         if (cameraReady && modelsReady && viewMode === 'camera' && !showRegister && !cooldown) {
-            const interval = setInterval(performScan, 1000);
+            const interval = setInterval(performScan, 500); // Fast: scan every 0.5 seconds
             return () => clearInterval(interval);
         }
     }, [cameraReady, modelsReady, viewMode, showRegister, cooldown, workers, todayLogs, lastScannedId]);
@@ -162,7 +173,7 @@ export default function ScannerComponent() {
                 return;
             }
 
-            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.6); // More lenient for better recognition
+            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.5); // Strict for accurate matching
 
             if (match) {
                 console.log(`[SCAN] ✓ Matched: ${match.worker.name}`);
