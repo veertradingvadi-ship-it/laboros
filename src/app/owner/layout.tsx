@@ -1,46 +1,10 @@
 'use client';
 
-import { ReactNode, useState, useEffect, createContext, useContext } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { COMPANY_NAME } from '@/lib/config';
 import { supabase } from '@/lib/supabase';
-
-// Gujarati translations for owner pages
-const translations = {
-    en: {
-        ownerPanel: 'Owner Panel',
-        dashboard: 'Dashboard',
-        sites: 'Sites',
-        workers: 'Workers',
-        staff: 'Staff',
-        tasks: 'Tasks',
-        audit: 'Audit',
-        finance: 'Finance',
-        back: 'Back',
-        logout: 'Logout',
-    },
-    gu: {
-        ownerPanel: 'માલિક પેનલ',
-        dashboard: 'ડેશબોર્ડ',
-        sites: 'સાઇટ્સ',
-        workers: 'કામદારો',
-        staff: 'સ્ટાફ',
-        tasks: 'કાર્યો',
-        audit: 'ઓડિટ',
-        finance: 'નાણાં',
-        back: 'પાછા',
-        logout: 'લોગઆઉટ',
-    }
-};
-
-// Language context for owner pages
-export const OwnerLangContext = createContext<{ lang: 'en' | 'gu'; setLang: (l: 'en' | 'gu') => void; t: typeof translations['en'] }>({
-    lang: 'gu',
-    setLang: () => { },
-    t: translations.gu
-});
-
-export const useOwnerLang = () => useContext(OwnerLangContext);
+import { OwnerLangContext, ownerTranslations } from '@/lib/owner-lang-context';
 
 interface OwnerLayoutProps {
     children: ReactNode;
@@ -54,7 +18,7 @@ export default function OwnerLayout({ children }: OwnerLayoutProps) {
     const [authorized, setAuthorized] = useState(false);
     const [lang, setLang] = useState<'en' | 'gu'>('gu');
 
-    const t = translations[lang];
+    const t = ownerTranslations[lang];
 
     const navItems = [
         { href: '/owner', icon: '📊', label: t.dashboard },
