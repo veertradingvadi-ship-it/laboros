@@ -155,7 +155,7 @@ export default function ScannerComponent() {
                 return;
             }
 
-            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.55); // More lenient for better recognition
+            const match = await findBestMatch(descriptor, workersWithDescriptors, 0.6); // More lenient for better recognition
 
             if (match) {
                 console.log(`[SCAN] ✓ Matched: ${match.worker.name}`);
