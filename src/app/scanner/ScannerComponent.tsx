@@ -67,6 +67,13 @@ export default function ScannerComponent() {
     const [error, setError] = useState<string | null>(null);
     const [faceBox, setFaceBox] = useState<FaceBox | null>(null);
 
+    // Early checkout confirmation state
+    const [earlyCheckoutConfirm, setEarlyCheckoutConfirm] = useState<{ workerId: string; workerName: string; hours: number; expires: number } | null>(null);
+
+    const setShowEarlyCheckoutConfirm = (data: { workerId: string; workerName: string; hours: number }) => {
+        setEarlyCheckoutConfirm({ ...data, expires: Date.now() + 30000 }); // 30 second timeout
+    };
+
     const currentDate = new Date().toISOString().split('T')[0];
     const t = (text: string) => lang === 'gu' && guj[text] ? guj[text] : text;
 
@@ -190,23 +197,59 @@ export default function ScannerComponent() {
     }, [cameraReady, modelsReady, isScanning, cooldown, workers, todayLogs, lastScannedId]);
 
     const handleWorkerScan = async (workerId: string, workerName: string) => {
+        // Check if there's a pending early checkout confirmation for this worker
+        if (earlyCheckoutConfirm && earlyCheckoutConfirm.workerId === workerId && Date.now() < earlyCheckoutConfirm.expires) {
+            // Confirmed early checkout
+            showFeedback(`${workerName}\n✓ Early checkout confirmed!`, 'out');
+            speak(`${workerName}, early checkout confirmed.`);
+            await performCheckOut(workerId, workerName, earlyCheckoutConfirm.hours);
+            setEarlyCheckoutConfirm(null);
+            return;
+        }
+
+        // Clear expired confirmation
+        if (earlyCheckoutConfirm && Date.now() >= earlyCheckoutConfirm.expires) {
+            setEarlyCheckoutConfirm(null);
+        }
+
         const existingLog = todayLogs.find(l => l.worker_id === workerId);
 
         if (!existingLog) {
+            // First scan of the day - Check In
             await performCheckIn(workerId, workerName);
         } else if (!existingLog.check_out_time) {
+            // Already checked in - Calculate time since check-in
             const checkInTime = new Date(existingLog.check_in_time!).getTime();
-            const hoursSince = (Date.now() - checkInTime) / 3600000;
+            const msSince = Date.now() - checkInTime;
+            const minsSince = Math.round(msSince / 60000);
+            const hoursSince = msSince / 3600000;
+
+            // Format time properly (minutes vs hours)
+            const timeAgo = hoursSince >= 1
+                ? `${Math.floor(hoursSince)} hour${Math.floor(hoursSince) > 1 ? 's' : ''} ${minsSince % 60} min`
+                : `${minsSince} minute${minsSince !== 1 ? 's' : ''}`;
+
             if (hoursSince < 1) {
-                const minsAgo = Math.round((Date.now() - checkInTime) / 60000);
-                showFeedback(`${workerName}\n${t('Already scanned')} ${minsAgo}m`, 'info');
+                // Less than 1 hour - Don't allow checkout, show warning
+                showFeedback(`${workerName}\n⚠️ Checked in ${timeAgo} ago\nToo early for checkout`, 'info');
+                speak(`${workerName}, you already checked in ${minsSince} minutes ago. Too early to check out. This may affect your salary.`);
                 addRecentScan(workerId, workerName, 'SKIP');
                 startCooldown(workerId);
+            } else if (hoursSince < 4) {
+                // 1-4 hours - Early checkout warning
+                showFeedback(`${workerName}\n⚠️ Only ${Math.floor(hoursSince)}h worked\nCheckout may affect salary!`, 'info');
+                speak(`${workerName}, you worked only ${Math.floor(hoursSince)} hours. Early checkout may affect your salary. Scan again to confirm checkout.`);
+                // Set a flag to allow checkout on next scan within 30 seconds
+                setShowEarlyCheckoutConfirm({ workerId, workerName, hours: hoursSince });
+                startCooldown(workerId);
             } else {
+                // 4+ hours - Normal checkout
                 await performCheckOut(workerId, workerName, hoursSince);
             }
         } else {
-            showFeedback(`${workerName}\n${t('Day completed')}`, 'info');
+            // Already checked out today
+            showFeedback(`${workerName}\n✓ ${t('Day completed')}`, 'info');
+            speak(`${workerName}, your day is already completed.`);
             startCooldown(workerId);
         }
     };
